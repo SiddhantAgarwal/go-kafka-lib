@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/SiddhantAgarwal/go-kafka-lib/pkg/consumer"
 )
@@ -41,17 +40,16 @@ func main() {
 	consumerInst, err := consumer.NewConsumer(
 		consumer.WithSeedBrokers(seeds...),
 		consumer.WithTopic(consumeTopic),
-		consumer.WithCommitInterval(time.Millisecond*500),
 		consumer.WithConsumerGroup(consumerGroup),
+		consumer.WithCommitStrategy(consumer.CommitStrategyPerFetch),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	go func() {
-		if err := consumerInst.Consume(cctx, func(b []byte) error {
+		if err := consumerInst.Consume(cctx, func(b []byte) {
 			fmt.Printf("consumer id: %s group: %s, message: %s\n", consumerID, consumerGroup, string(b))
-			return nil
 		}); err != nil {
 			fmt.Println(err)
 			done <- true
