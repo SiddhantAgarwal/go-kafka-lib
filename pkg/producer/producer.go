@@ -69,3 +69,36 @@ func (p *Producer) Produce(ctx context.Context, payload []byte) error {
 	<-done
 	return toReturnErr
 }
+
+func (p *Producer) ProduceWithHeaders(ctx context.Context, payload []byte, headers map[string][]byte) error {
+	var (
+		toReturnErr error
+		kHeaders    []kgo.RecordHeader
+	)
+
+	done := make(chan struct{})
+	for key, value := range headers {
+		kHeaders = append(kHeaders, kgo.RecordHeader{
+			Key:   key,
+			Value: value,
+		})
+	}
+
+	p.franzClient.Produce(
+		ctx,
+		&kgo.Record{
+			Topic:   p.produceTopic,
+			Value:   payload,
+			Headers: kHeaders,
+		},
+		func(r *kgo.Record, err error) {
+			if err != nil {
+				toReturnErr = err
+			}
+			done <- struct{}{}
+		},
+	)
+
+	<-done
+	return toReturnErr
+}
