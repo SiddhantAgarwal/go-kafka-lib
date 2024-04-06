@@ -9,12 +9,19 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
+const (
+	CommitStrategyAuto int = iota
+	CommitStrategyPerFetch
+	CommitStrategyNoCommit
+)
+
 type Consumer struct {
 	franzClient        *kgo.Client
 	consumerTopic      string
 	seeds              []string
 	groupName          string
 	autoCommitInterval time.Duration
+	commitStrategy     int
 }
 
 func NewConsumer(options ...func(*Consumer)) (*Consumer, error) {
@@ -23,12 +30,18 @@ func NewConsumer(options ...func(*Consumer)) (*Consumer, error) {
 		opt(consumer)
 	}
 
-	client, err := kgo.NewClient(
+	kOptions := []kgo.Opt{
 		kgo.ConsumeTopics(consumer.consumerTopic),
 		kgo.ConsumerGroup(consumer.groupName),
 		kgo.SeedBrokers(consumer.seeds...),
-		kgo.AutoCommitInterval(consumer.autoCommitInterval),
-	)
+	}
+	switch consumer.commitStrategy {
+	case CommitStrategyAuto:
+		kOptions = append(kOptions, kgo.AutoCommitInterval(consumer.autoCommitInterval))
+	case CommitStrategyPerFetch, CommitStrategyNoCommit:
+		kOptions = append(kOptions, kgo.DisableAutoCommit())
+	}
+	client, err := kgo.NewClient(kOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +49,12 @@ func NewConsumer(options ...func(*Consumer)) (*Consumer, error) {
 	consumer.franzClient = client
 
 	return consumer, nil
+}
+
+func WithCommitStrategy(strategy int) func(*Consumer) {
+	return func(c *Consumer) {
+		c.commitStrategy = strategy
+	}
 }
 
 func WithTopic(topic string) func(*Consumer) {
@@ -66,7 +85,7 @@ func (c *Consumer) Close() {
 	c.franzClient.Close()
 }
 
-func (c *Consumer) Consume(ctx context.Context, callback func([]byte) error) error {
+func (c *Consumer) Consume(ctx context.Context, callback func([]byte)) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -77,14 +96,16 @@ func (c *Consumer) Consume(ctx context.Context, callback func([]byte) error) err
 				return errors.New(fmt.Sprint(errs))
 			}
 
-			iter := fetches.RecordIter()
-			for !iter.Done() {
-				record := iter.Next()
+			// process each record
+			fetches.EachRecord(func(r *kgo.Record) {
+				callback(r.Value)
+			})
 
-				err := callback(record.Value)
-				if err != nil {
-					fmt.Println("error in callback", err)
-				}
+			// commit offset basis the strategy
+			switch c.commitStrategy {
+			case CommitStrategyPerFetch:
+				c.franzClient.CommitUncommittedOffsets(ctx)
+			case CommitStrategyAuto, CommitStrategyNoCommit:
 			}
 		}
 	}
