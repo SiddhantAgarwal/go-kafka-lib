@@ -3,7 +3,7 @@ module github.com/SiddhantAgarwal/go-kafka-lib
 go 1.22.0
 
 require (
-	github.com/SiddhantAgarwal/mage-targets v1.0.0
+	github.com/SiddhantAgarwal/mage-targets v1.0.1
 	github.com/twmb/franz-go v1.16.1
 )
 

@@ -1,5 +1,5 @@
-github.com/SiddhantAgarwal/mage-targets v1.0.0 h1:9qrgK3r/Uq0raMTSrDWEKMMeaC2/dsNiyEbvHNnVqjA=
-github.com/SiddhantAgarwal/mage-targets v1.0.0/go.mod h1:o0BikCAyoOe+DHd7MEXC8FpoLqcIonkNWBNFy4incT0=
+github.com/SiddhantAgarwal/mage-targets v1.0.1 h1:vuMe62HG7qd34e8NEGcRlo7Qbkm22cWe0c6tIMDZA+o=
+github.com/SiddhantAgarwal/mage-targets v1.0.1/go.mod h1:o0BikCAyoOe+DHd7MEXC8FpoLqcIonkNWBNFy4incT0=
 github.com/klauspost/compress v1.17.4 h1:Ej5ixsIri7BrIjBkRZLTo6ghwrEtHFk7ijlczPW4fZ4=
 github.com/klauspost/compress v1.17.4/go.mod h1:/dCuZOvVtNoHsyb+cuJD3itjs3NbnF6KH9zAO4BDxPM=
 github.com/magefile/mage v1.15.0 h1:BvGheCMAsG3bWUDbZ8AyXXpCNwU9u5CB6sM+HNb9HYg=
